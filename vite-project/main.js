@@ -24,10 +24,10 @@ import * as THREE from 'three';
 				controls.minDistance = 5;
 				controls.maxDistance = 500;
 
-				scene.add( new THREE.AmbientLight( 0x666666, 1 ) );
+				scene.add( new THREE.AmbientLight( 0xffffff, 1 ) );
 
-				const light = new THREE.PointLight( 0xffffff, 5, 0, 0 );
-				light.position.set( 0, -50, 100 );
+				const light = new THREE.PointLight( 0xffffff, 1, 0, 0 );
+				light.position.set( 10, -100, 100 );
 				scene.add( light );
 
         // Create an AxesHelper object
@@ -37,14 +37,13 @@ import * as THREE from 'three';
         scene.add(axesHelper);
 
 				// CUP CREATION
-
         const height = -50
         const radius = 30;
         const wallThickness = 5
 
         const circlePoints = [];
-         // Define the radius of the circle
-        const segments = 50; // Define the number of segments for the circle
+        // Define the radius of the circle
+        const segments = 100; // Define the number of segments for the circle
         
         // Generate the points on the circle
         for (let i = 0; i <= segments; i++) {
@@ -58,18 +57,14 @@ import * as THREE from 'three';
         closedSpline.closed = true;
 
 				const extrudeSettings1 = {
-					steps: 100,
-					bevelEnabled: false,
+					steps: 1000,
 					extrudePath: closedSpline
 				};
 
-
 				const pts1 = []
 
-				
-
         // CUP GENERATION
-        const waveSegments = 500; // Define the number of segments for the wave
+        const waveSegments = 1000;
         pts1.push(new THREE.Vector2(0, wallThickness))
         // Generate the points on the sinus wave
         for (let i = 0; i <= waveSegments; i++) {
@@ -78,23 +73,23 @@ import * as THREE from 'three';
             pts1.push(new THREE.Vector2(x, y));
         }
         pts1.push(new THREE.Vector2(height, wallThickness))
-        
 
+
+        // ADD TEXTURE
+
+
+        // CREATE GEOMETRY AND MATERIAL
 
 				const shape1 = new THREE.Shape( pts1 );
 				const geometry1 = new THREE.ExtrudeGeometry( shape1, extrudeSettings1 );
-				const material1 = new THREE.MeshLambertMaterial( { color: 0xb00000, wireframe: false } );
+        const material1 = new THREE.MeshPhysicalMaterial({
+          metalness: 0.2,
+          roughness: 0.4,
+          flatShading: false // This ensures smooth shading
+        });
 				const mesh1 = new THREE.Mesh( geometry1, material1 );
 
-
-        const wireframeGeometry = new THREE.EdgesGeometry(geometry1);
-        const wireframeMaterial = new THREE.LineBasicMaterial({ color: 0xffffff, linewidth: 1 });
-        const wireframe = new THREE.LineSegments(wireframeGeometry, wireframeMaterial);
-
-
 				scene.add( mesh1 );
-        //mesh1.add(wireframe)
-
 
       }
 
