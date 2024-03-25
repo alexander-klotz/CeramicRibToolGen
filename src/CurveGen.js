@@ -79,7 +79,6 @@ export default function curveGen(height1, width1, sharpness1, height2, width2, s
         totalXValues = [...totalXValues, curvePoints.x[i]]
         totalYValues = [...totalYValues, curvePoints.y[i]]
     }
-    console.log({x: totalXValues, y: totalYValues})
     return {x: totalXValues, y: totalYValues};
     
 }
