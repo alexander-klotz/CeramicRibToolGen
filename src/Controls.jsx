@@ -96,6 +96,7 @@ function Accord(props) {
           <InputSlider value={props.waveParams.width} setValue={(value) => setValue(props.waveParams, props.setWaveParams, "width", value)} max={50}/>
           <Typography>Sharpness (%)</Typography>
           <InputSlider value={props.waveParams.sharpness} setValue={(value) => setValue(props.waveParams, props.setWaveParams, "sharpness", value)} max={100}/>
+          <Typography>Invert Curve</Typography>
           <Checkbox {...label} checked={props.waveParams.outwards} onClick={() => setValue(props.waveParams, props.setWaveParams, "outwards", !props.waveParams.outwards)} />
         </Box>
       </AccordionDetails>
