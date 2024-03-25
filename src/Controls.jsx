@@ -1,4 +1,4 @@
-import { Box, Tab, Tabs, Typography, Accordion, AccordionSummary, AccordionDetails, Button } from '@mui/material';
+import { Box, Tab, Tabs, Typography, Accordion, AccordionSummary, AccordionDetails, Checkbox } from '@mui/material';
 import { useState } from 'react';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import InputSlider from './InputSlider';
@@ -68,6 +68,7 @@ function Controls(props) {
 
 }
 
+const label = { inputProps: { 'aria-label': 'Checkbox demo' } };
 
 function Accord(props) {
 
@@ -95,6 +96,7 @@ function Accord(props) {
           <InputSlider value={props.waveParams.width} setValue={(value) => setValue(props.waveParams, props.setWaveParams, "width", value)} max={50}/>
           <Typography>Sharpness (%)</Typography>
           <InputSlider value={props.waveParams.sharpness} setValue={(value) => setValue(props.waveParams, props.setWaveParams, "sharpness", value)} max={100}/>
+          <Checkbox {...label} checked={props.waveParams.outwards} onClick={() => setValue(props.waveParams, props.setWaveParams, "outwards", !props.waveParams.outwards)} />
         </Box>
       </AccordionDetails>
     </Accordion>

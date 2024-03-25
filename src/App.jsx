@@ -18,12 +18,14 @@ export default function App() {
       height: 2,
       width: 5,
       sharpness: 0, // value from 0 to 1 
+      outwards: true
     })
   
   const [wave2Params, setWave2Params] = useState({
       height: 2,
       width: 5,
-      sharpness: 0, // value from 0 to 1 
+      sharpness: 0, // value from 0 to 1
+      outwards: false 
     })
 
   /*
@@ -86,13 +88,15 @@ function Cup(props) {
   let waveHeight1 = props.wave1Params.height/10
   let waveWidth1 = props.wave1Params.width/10
   let waveSharpness1 = props.wave1Params.sharpness / 100
+  let outwards1 = props.wave1Params.outwards
 
   let waveHeight2 = props.wave2Params.height/10
   let waveWidth2 = props.wave2Params.width/10
   let waveSharpness2 = props.wave2Params.sharpness / 100
+  let outwards2 = props.wave2Params.outwards
 
   // TODO: add some way of invertING THE CURVE BY ADDING A MINUS
-  let curvePoints = curveGen(waveHeight1 * -1, waveWidth1, waveSharpness1, waveHeight2, waveWidth2, waveSharpness2, height, 0)
+  let curvePoints = curveGen(waveHeight1 * (outwards1?-1:1), waveWidth1, waveSharpness1, waveHeight2 * (outwards2?-1:1), waveWidth2, waveSharpness2, height, 0)
   // change this so the x value is calculated
   
   
