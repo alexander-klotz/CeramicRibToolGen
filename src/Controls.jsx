@@ -1,4 +1,4 @@
-import { Box, Tab, Tabs, Typography, Accordion, AccordionSummary, AccordionDetails, Checkbox } from '@mui/material';
+import { Box, Tab, Tabs, Typography, Accordion, AccordionSummary, AccordionDetails, Checkbox, Select, MenuItem } from '@mui/material';
 import { useState } from 'react';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import InputSlider from './InputSlider';
@@ -40,17 +40,22 @@ function Controls(props) {
             {tabIndex === 0 && (
               <Box>
                 <Typography>Height</Typography>
-                <InputSlider value={props.cupParams.height} setValue={(value) => setValue(props.cupParams, props.setCupParams, "height", value)} max={300}/>
+                <InputSlider value={props.cupParams.height} setValue={(value) => setValue(props.cupParams, props.setCupParams, "height", value)} max={300} min={0.1}/>
+                
                 <Typography>Radius</Typography>
-                <InputSlider value={props.cupParams.radius} setValue={(value) => setValue(props.cupParams, props.setCupParams, "radius", value)} max={100}/>
+                <InputSlider value={props.cupParams.radius} setValue={(value) => setValue(props.cupParams, props.setCupParams, "radius", value)} max={100} min={0.1} />
+                
                 <Typography>Wall thickness</Typography>
-                <InputSlider value={props.cupParams.wallThickness} setValue={(value) => setValue(props.cupParams, props.setCupParams, "wallThickness", value)} max={20}/>
+                <InputSlider value={props.cupParams.wallThickness} setValue={(value) => setValue(props.cupParams, props.setCupParams, "wallThickness", value)} max={20} min={0.1}/>
               </Box>
             )}
             {tabIndex === 1 && (
               <Box>
                 <Accord name="First Curve" waveParams={props.wave1Params} setWaveParams={props.setWave1Params}/>
                 <Accord name="Second Curve" waveParams={props.wave2Params} setWaveParams={props.setWave2Params}/>
+                <p> </p>
+                <Typography>Smoothing (%)</Typography>
+                <InputSlider value={props.waveSmoothing} setValue={props.setWaveSmoothing} max={100} min={0}/>
               </Box>
 
             )}
@@ -91,11 +96,26 @@ function Accord(props) {
       <AccordionDetails>
         <Box>
           <Typography>Height</Typography>
-          <InputSlider value={props.waveParams.height} setValue={(value) => setValue(props.waveParams, props.setWaveParams, "height", value)} max={50}/>
+          <InputSlider value={props.waveParams.height} setValue={(value) => setValue(props.waveParams, props.setWaveParams, "height", value)} max={50} min={0.1}/>
+          
           <Typography>Width</Typography>
-          <InputSlider value={props.waveParams.width} setValue={(value) => setValue(props.waveParams, props.setWaveParams, "width", value)} max={50}/>
+          <InputSlider value={props.waveParams.width} setValue={(value) => setValue(props.waveParams, props.setWaveParams, "width", value)} max={50} min={0.1}/>
+          
           <Typography>Sharpness (%)</Typography>
-          <InputSlider value={props.waveParams.sharpness} setValue={(value) => setValue(props.waveParams, props.setWaveParams, "sharpness", value)} max={100}/>
+          <InputSlider value={props.waveParams.sharpness} setValue={(value) => setValue(props.waveParams, props.setWaveParams, "sharpness", value)} max={100} min={0}/>
+          
+          <Select
+            labelId="select-curveShape-label"
+            id="select-curveShape"
+            value={1}
+            label="CurveShape"
+            onChange={1}
+          >
+            <MenuItem value={0}>Triangle</MenuItem>
+            <MenuItem value={1}>Elipsoid</MenuItem>
+            <MenuItem value={2}>Sinus</MenuItem>
+          </Select>
+
           <Typography>Invert Curve</Typography>
           <Checkbox {...label} checked={props.waveParams.outwards} onClick={() => setValue(props.waveParams, props.setWaveParams, "outwards", !props.waveParams.outwards)} />
         </Box>

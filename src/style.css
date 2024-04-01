@@ -12,13 +12,7 @@ html {
 .controlsDiv{
     position: fixed;
     top: 0;
-    /*
-    border: 0.1px solid #08f6febb;  
-    background-color: #08f6fe06;  
-    box-shadow:
-      0 0 10px #08f6fe61; 
-    border-radius: 10px;
-    */
+    height: 70vh;
     color: rgb(0, 0, 0);
     padding: 10px;
     z-index: 10;

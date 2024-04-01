@@ -9,10 +9,12 @@ import curveGen from './CurveGen'
 
 export default function App() {
   const [cupParams, setCupParams] = useState({
-    height: 50,
-    radius: 20,
-    wallThickness: 2,
+    height: 100,
+    radius: 40,
+    wallThickness: 5,
   })
+
+  const [waveSmoothing, setWaveSmoothing] = useState(0)
 
   const [wave1Params, setWave1Params] = useState({
       height: 2,
@@ -29,23 +31,21 @@ export default function App() {
     })
 
   /*
-            <AccumulativeShadows temporal frames={20} color="#413249" colorBlend={0.5} opacity={0.5} scale={10} alphaTest={0.85}>
-            <RandomizedLight amount={10} radius={5} ambient={0.2} position={[5, 3, 2]} bias={0.0001} />
-          </AccumulativeShadows>
+
   */
 
   return (
     <div style={{ width: "100vw", height: "100vh" }}>
-      <Controls cupParams={cupParams} setCupParams={setCupParams} wave1Params={wave1Params} setWave1Params={setWave1Params} wave2Params={wave2Params} setWave2Params={setWave2Params}/>
-      <Canvas camera={{ position: [15, 15, 20], fov: 50 }} style={{ background: '#edfcf2'}}>
-        <group position={[0, -0.65, 0]}>
-          
+      <Controls cupParams={cupParams} setCupParams={setCupParams} wave1Params={wave1Params} setWave1Params={setWave1Params} wave2Params={wave2Params} setWave2Params={setWave2Params} waveSmoothing={waveSmoothing} setWaveSmoothing={setWaveSmoothing}/>
+      <Canvas camera={{ position: [10, 10, 13], fov: 50 }} style={{ background: '#b9ccc0'}}>
+        <group position={[0, -5, 0]}>
 
-          <Cup cupParams={cupParams} wave1Params={wave1Params} wave2Params={wave2Params}/>
+
+          <Cup cupParams={cupParams} wave1Params={wave1Params} wave2Params={wave2Params} waveSmoothing={waveSmoothing}/>
         </group>
         
-        <ambientLight intensity={3} />
-        <pointLight position={[50, 30, 20]} intensity={20000}/>        
+        <ambientLight intensity={1.8} />
+        <pointLight position={[15, 8, 6]} intensity={400}/>        
         <OrbitControls enablePan={false} enableZoom={true} enableRotate={true} minPolarAngle={0} maxPolarAngle={Math.PI/2} />
       </Canvas>
     </div>

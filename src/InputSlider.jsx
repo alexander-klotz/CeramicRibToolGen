@@ -36,7 +36,7 @@ export default function InputSlider(props) {
             value={typeof props.value === 'number' ? props.value : 0}
             onChange={handleSliderChange}
             aria-labelledby="input-slider"
-            min={0.1}
+            min={props.min}
             max={props.max}
           />
         </Grid>
@@ -48,7 +48,7 @@ export default function InputSlider(props) {
             onBlur={handleBlur}
             inputProps={{
               step: 0.1,
-              min: 0.1,
+              min: props.min,
               max: props.max,
               type: 'number',
               'aria-labelledby': 'input-slider',
