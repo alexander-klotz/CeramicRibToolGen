@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo} from 'react'
 import { Canvas } from '@react-three/fiber'
 import { AccumulativeShadows, RandomizedLight, Center, Environment, OrbitControls, Extrude, Shape, Points} from '@react-three/drei'
 import { Lightformer } from '@react-three/drei'
@@ -58,6 +58,10 @@ function Cup(props) {
   let radius = props.cupParams.radius/10
   let wallThickness = props.cupParams.wallThickness/10
 
+  let toolWidth = 3
+  let toolHeight = props.cupParams.height/10
+  let toolThickness = 1
+
   const circlePoints = [];
   const segments = 100; // number of segments for the circle
   
@@ -79,10 +83,12 @@ function Cup(props) {
     extrudePath: closedSpline    
   };
 
-  const pts1 = []
+  const cupProfile = []
+  const toolProfile = []
 
   const waveSegments = 500;
-  pts1.push(new THREE.Vector2(0, wallThickness))
+  cupProfile.push(new THREE.Vector2(0, wallThickness))
+  toolProfile.push(new THREE.Vector2(0, -toolWidth))
   // Generate the points on the sinus wave
   
   let waveHeight1 = props.wave1Params.height/10
@@ -101,26 +107,46 @@ function Cup(props) {
   
   
   for (let i = 0; i < curvePoints.x.length; i++) {
-    pts1.push(new THREE.Vector2(curvePoints.x[i], curvePoints.y[i]));
+    cupProfile.push(new THREE.Vector2(curvePoints.x[i], curvePoints.y[i]));
+    toolProfile.push(new THREE.Vector2(curvePoints.x[i], curvePoints.y[i]));
   }
   
-  pts1.push(new THREE.Vector2(height, wallThickness))
 
-  // CREATE GEOMETRY AND MATERIAL
+  cupProfile.push(new THREE.Vector2(height, wallThickness))
+  toolProfile.push(new THREE.Vector2(toolHeight, -toolWidth))
 
-  const shape1 = new THREE.Shape( pts1 );
+  const cupShape = new THREE.Shape( cupProfile );
+  const toolShape = new THREE.Shape( toolProfile );
+
+  // TOOL
+  const extrudeSettings = useMemo(
+    () => ({
+      steps: 100,
+      depth: 0.5,
+      bevelEnabled: false,
+      bevelThickness: 0.1,
+      bevelSize: 0.2,
+      bevelOffset: 0,
+      bevelSegments: 10,
+    }),
+    []
+  )
+
   return (
     <Center top>
       <mesh castShadow >
-        <Extrude rotation={[0,0,-Math.PI/2]} args={[shape1, extrudeSettings1]} castShadow>
+        <Extrude rotation={[0,0,-Math.PI/2]} args={[cupShape, extrudeSettings1]} castShadow>
           <meshPhysicalMaterial color="white" metalness={0.2} roughness={0.4}  wireframe={false} clearcoat={0.5} clearcoatRoughness={0.1}/>
+        </Extrude>
+        <Extrude args={[toolShape, extrudeSettings]} position={[radius + 1, -height/2,0]} rotation={[Math.PI, Math.PI, -Math.PI/2]} >
+          <meshPhongMaterial attach="material" color="gray" />
         </Extrude>
       </mesh>
     </Center>
   )
 }
 
-
+ 
 function Env() {
   return       (
     <>
