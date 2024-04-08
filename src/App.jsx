@@ -1,6 +1,6 @@
 import { useState, useMemo} from 'react'
 import { Canvas } from '@react-three/fiber'
-import { AccumulativeShadows, RandomizedLight, Center, Environment, OrbitControls, Extrude, Shape, Points} from '@react-three/drei'
+import { AccumulativeShadows, RandomizedLight, Center, Environment, OrbitControls, Extrude} from '@react-three/drei'
 import { Lightformer } from '@react-three/drei'
 import { EffectComposer, N8AO } from '@react-three/postprocessing'
 import * as THREE from 'three';
@@ -30,18 +30,28 @@ export default function App() {
       outwards: false 
     })
 
-  /*
+  const [toolParams, setToolParams] = useState({
+      // TODO: maybe add independent height: 2,
+      width: 5,
+      thickness: 0.3,
+    })
 
-  */
 
   return (
     <div style={{ width: "100vw", height: "100vh" }}>
-      <Controls cupParams={cupParams} setCupParams={setCupParams} wave1Params={wave1Params} setWave1Params={setWave1Params} wave2Params={wave2Params} setWave2Params={setWave2Params} waveSmoothing={waveSmoothing} setWaveSmoothing={setWaveSmoothing}/>
+      <Controls 
+        cupParams={cupParams} setCupParams={setCupParams} 
+        wave1Params={wave1Params} setWave1Params={setWave1Params} 
+        wave2Params={wave2Params} setWave2Params={setWave2Params} 
+        waveSmoothing={waveSmoothing} setWaveSmoothing={setWaveSmoothing}
+        toolParams={toolParams} setToolParams={setToolParams}  
+      />
+
       <Canvas camera={{ position: [10, 10, 13], fov: 50 }} style={{ background: '#b9ccc0'}}>
         <group position={[0, -5, 0]}>
 
 
-          <Cup cupParams={cupParams} wave1Params={wave1Params} wave2Params={wave2Params} waveSmoothing={waveSmoothing}/>
+          <Cup cupParams={cupParams} wave1Params={wave1Params} wave2Params={wave2Params} waveSmoothing={waveSmoothing} toolParams={toolParams}/>
         </group>
         
         <ambientLight intensity={1.8} />
@@ -58,9 +68,9 @@ function Cup(props) {
   let radius = props.cupParams.radius/10
   let wallThickness = props.cupParams.wallThickness/10
 
-  let toolWidth = 3
+  let toolWidth = props.toolParams.width
   let toolHeight = props.cupParams.height/10
-  let toolThickness = 1
+  let toolThickness = props.toolParams.thickness
 
   const circlePoints = [];
   const segments = 100; // number of segments for the circle
@@ -101,11 +111,8 @@ function Cup(props) {
   let waveSharpness2 = props.wave2Params.sharpness / 100
   let outwards2 = props.wave2Params.outwards
 
-  // TODO: add some way of invertING THE CURVE BY ADDING A MINUS
   let curvePoints = curveGen(waveHeight1 * (outwards1?-1:1), waveWidth1, waveSharpness1, waveHeight2 * (outwards2?-1:1), waveWidth2, waveSharpness2, height, 0)
-  // change this so the x value is calculated
-  
-  
+
   for (let i = 0; i < curvePoints.x.length; i++) {
     cupProfile.push(new THREE.Vector2(curvePoints.x[i], curvePoints.y[i]));
     toolProfile.push(new THREE.Vector2(curvePoints.x[i], curvePoints.y[i]));
@@ -118,19 +125,27 @@ function Cup(props) {
   const cupShape = new THREE.Shape( cupProfile );
   const toolShape = new THREE.Shape( toolProfile );
 
+  // hole shape for tool
+  const holePath = new THREE.Path();
+  holePath.ellipse(toolHeight/2, -toolWidth/2, toolHeight/4, toolWidth/4, 0, Math.PI * 2, false, 0)
+
+  // Add the hole to the main shape
+  toolShape.holes.push(holePath);
+
   // TOOL
   const extrudeSettings = useMemo(
     () => ({
-      steps: 100,
-      depth: 0.5,
+      steps: 1,
+      depth: toolThickness,
       bevelEnabled: false,
-      bevelThickness: 0.1,
-      bevelSize: 0.2,
-      bevelOffset: 0,
+      bevelThickness: 0.2,
+      bevelSize: 0.,
+      bevelOffset: -0.1,
       bevelSegments: 10,
     }),
     []
   )
+
 
   return (
     <Center top>
@@ -138,9 +153,11 @@ function Cup(props) {
         <Extrude rotation={[0,0,-Math.PI/2]} args={[cupShape, extrudeSettings1]} castShadow>
           <meshPhysicalMaterial color="white" metalness={0.2} roughness={0.4}  wireframe={false} clearcoat={0.5} clearcoatRoughness={0.1}/>
         </Extrude>
-        <Extrude args={[toolShape, extrudeSettings]} position={[radius + 1, -height/2,0]} rotation={[Math.PI, Math.PI, -Math.PI/2]} >
+
+        <Extrude args={[toolShape, extrudeSettings]} position={[radius + 1, -height/2, 0]} rotation={[Math.PI, Math.PI, -Math.PI/2]} >
           <meshPhongMaterial attach="material" color="gray" />
-        </Extrude>
+        </Extrude>          
+
       </mesh>
     </Center>
   )
@@ -165,3 +182,35 @@ function Env() {
 
   )
 }
+
+
+/* FUTURE TODO (create bevel on the tool maybe using the below):
+    const count = 100;
+
+    const arr = [];
+    for (let i = 0; i < count; i++) {
+      arr.push(
+        <Extrude args={[toolShape, extrudeSettings]} position={[radius + 3 + 0.001*toolWidth*i, -height/2, toolThickness + i*0.003*toolThickness]} scale={[1, 1-i*0.001, 0.003]} rotation={[Math.PI, Math.PI, -Math.PI/2]}>
+          <meshPhongMaterial attach="material" color="green" />
+        </Extrude>
+      );
+    }
+
+    // extrdue position args = [1, 2, 3]
+    // translate postition args = (1, )
+    const geometries = useMemo(() => new Array(count).fill().map((_, i) => {
+      const geometry = new ExtrudeGeometry(toolShape, extrudeSettings);
+      geometry.rotateX(Math.PI);
+      geometry.rotateY(Math.PI);
+      geometry.rotateZ(-Math.PI/2);
+      geometry.translate(radius + 6 + 0.001*toolWidth*i, -height/2, toolThickness + i*0.003*toolThickness); // 0.001 something seems to be off with scaling MAYBE????
+      geometry.scale(1-i*0.001, 1, 0.1);
+      
+
+      return geometry;
+    }), [toolShape, extrudeSettings, radius, toolWidth, height, toolThickness]);
+
+    const singleGeometry = BufferGeometryUtils.mergeGeometries(geometries);
+    const geometry = new ExtrudeGeometry(toolShape, extrudeSettings);
+    geometry.copy(singleGeometry)
+*/
