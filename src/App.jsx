@@ -152,9 +152,9 @@ function Cup(props) {
   let shearMatrix = new THREE.Matrix4();
 
   // Define the amount of shearing
-  let shearX = 0.5; // Adjust these values to your needs
-  let shearY = 0.5;
-  let shearZ = 0.5;
+  let shearX = 0; // Adjust these values to your needs
+  let shearY = 0;
+  let shearZ = -1;
 
   // Set the matrix to represent a shear transformation along all axes
   shearMatrix.set(
@@ -175,13 +175,9 @@ function Cup(props) {
           <meshPhysicalMaterial color="white" metalness={0.2} roughness={0.4}  wireframe={false} clearcoat={0.5} clearcoatRoughness={0.1}/>
         </Extrude>
 
-        <Extrude args={[toolShape, extrudeSettings]} position={[radius + 1, -height/2, 0]} rotation={[Math.PI, Math.PI, -Math.PI/2]} >
-          <meshPhongMaterial attach="material" color="gray" />
-        </Extrude>
-
-        <Shape args={[toolGeom]} position={[radius + 3, -height/2, 0]} rotation={[Math.PI, Math.PI, -Math.PI/2]} >
+        <mesh geometry={toolGeom} position={[radius + 1, -height/2, 0]} rotation={[Math.PI, Math.PI*.75, -Math.PI/2]}>
           <meshPhongMaterial attach="material" color="pink" />
-        </Shape>            
+        </mesh>
 
       </mesh>
     </Center>
