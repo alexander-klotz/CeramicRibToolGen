@@ -1,6 +1,6 @@
 import { useState, useMemo} from 'react'
 import { Canvas } from '@react-three/fiber'
-import { AccumulativeShadows, RandomizedLight, Center, Environment, OrbitControls, Extrude} from '@react-three/drei'
+import { AccumulativeShadows, RandomizedLight, Center, Environment, OrbitControls, Extrude, Shape} from '@react-three/drei'
 import { Lightformer } from '@react-three/drei'
 import { EffectComposer, N8AO } from '@react-three/postprocessing'
 import * as THREE from 'three';
@@ -128,9 +128,8 @@ function Cup(props) {
   // hole shape for tool
   const holePath = new THREE.Path();
   holePath.ellipse(toolHeight/2, -toolWidth/2, toolHeight/4, toolWidth/4, 0, Math.PI * 2, false, 0)
-
-  // Add the hole to the main shape
   toolShape.holes.push(holePath);
+
 
   // TOOL
   const extrudeSettings = useMemo(
@@ -147,6 +146,28 @@ function Cup(props) {
   )
 
 
+  let toolGeom = new THREE.ExtrudeGeometry(toolShape, extrudeSettings);
+
+  // Create a new matrix for the shear transformation
+  let shearMatrix = new THREE.Matrix4();
+
+  // Define the amount of shearing
+  let shearX = 0.5; // Adjust these values to your needs
+  let shearY = 0.5;
+  let shearZ = 0.5;
+
+  // Set the matrix to represent a shear transformation along all axes
+  shearMatrix.set(
+    1, shearX, 0, 0,
+    shearY, 1, 0, 0,
+    0, shearZ, 1, 0,
+    0, 0, 0, 1
+  );
+
+  // Apply the shear transformation to the geometry
+  toolGeom.applyMatrix4(shearMatrix);
+
+
   return (
     <Center top>
       <mesh castShadow >
@@ -156,7 +177,11 @@ function Cup(props) {
 
         <Extrude args={[toolShape, extrudeSettings]} position={[radius + 1, -height/2, 0]} rotation={[Math.PI, Math.PI, -Math.PI/2]} >
           <meshPhongMaterial attach="material" color="gray" />
-        </Extrude>          
+        </Extrude>
+
+        <Shape args={[toolGeom]} position={[radius + 3, -height/2, 0]} rotation={[Math.PI, Math.PI, -Math.PI/2]} >
+          <meshPhongMaterial attach="material" color="pink" />
+        </Shape>            
 
       </mesh>
     </Center>
