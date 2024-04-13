@@ -32,7 +32,7 @@ export default function App() {
 
   const [toolParams, setToolParams] = useState({
       // TODO: maybe add independent height: 2,
-      width: 5,
+      width: 30,
       thickness: 0.3,
     })
 
@@ -68,7 +68,18 @@ function Cup(props) {
   let radius = props.cupParams.radius/10
   let wallThickness = props.cupParams.wallThickness/10
 
-  let toolWidth = props.toolParams.width
+  let waveHeight1 = props.wave1Params.height/10
+  let waveWidth1 = props.wave1Params.width/10
+  let waveSharpness1 = props.wave1Params.sharpness / 100
+  let outwards1 = props.wave1Params.outwards
+
+  let waveHeight2 = props.wave2Params.height/10
+  let waveWidth2 = props.wave2Params.width/10
+  let waveSharpness2 = props.wave2Params.sharpness / 100
+  let outwards2 = props.wave2Params.outwards
+
+  let toolWidth = Math.max((outwards1?waveHeight1:0), (outwards2?waveHeight2:0)) + 1
+  let toolBackWidth = props.toolParams.width/10
   let toolHeight = props.cupParams.height/10
   let toolThickness = props.toolParams.thickness
 
@@ -96,43 +107,41 @@ function Cup(props) {
   const cupProfile = []
   const toolProfile = []
 
-  const waveSegments = 500;
   cupProfile.push(new THREE.Vector2(0, wallThickness))
-  toolProfile.push(new THREE.Vector2(0, -toolWidth))
+  toolProfile.push(new THREE.Vector2(0, -toolWidth/1.8))
   // Generate the points on the sinus wave
   
-  let waveHeight1 = props.wave1Params.height/10
-  let waveWidth1 = props.wave1Params.width/10
-  let waveSharpness1 = props.wave1Params.sharpness / 100
-  let outwards1 = props.wave1Params.outwards
 
-  let waveHeight2 = props.wave2Params.height/10
-  let waveWidth2 = props.wave2Params.width/10
-  let waveSharpness2 = props.wave2Params.sharpness / 100
-  let outwards2 = props.wave2Params.outwards
 
   let curvePoints = curveGen(waveHeight1 * (outwards1?-1:1), waveWidth1, waveSharpness1, waveHeight2 * (outwards2?-1:1), waveWidth2, waveSharpness2, height, 0)
 
   for (let i = 0; i < curvePoints.x.length; i++) {
     cupProfile.push(new THREE.Vector2(curvePoints.x[i], curvePoints.y[i]));
-    toolProfile.push(new THREE.Vector2(curvePoints.x[i], curvePoints.y[i]));
+    toolProfile.push(new THREE.Vector2(curvePoints.x[i], curvePoints.y[i]/1.8));
   }
   
 
   cupProfile.push(new THREE.Vector2(height, wallThickness))
-  toolProfile.push(new THREE.Vector2(toolHeight, -toolWidth))
+  toolProfile.push(new THREE.Vector2(toolHeight, -toolWidth/1.8))
 
   const cupShape = new THREE.Shape( cupProfile );
   const toolShape = new THREE.Shape( toolProfile );
 
-  // hole shape for tool
-  const holePath = new THREE.Path();
-  holePath.ellipse(toolHeight/2, -toolWidth/2, toolHeight/4, toolWidth/4, 0, Math.PI * 2, false, 0)
-  toolShape.holes.push(holePath);
-
-
   // TOOL
-  const extrudeSettings = useMemo(
+  const extrudeSettingsTool1 = useMemo(
+    () => ({
+      steps: 1,
+      depth: toolThickness*1.8029,
+      bevelEnabled: false,
+      bevelThickness: 0.2,
+      bevelSize: 0.,
+      bevelOffset: -0.1,
+      bevelSegments: 10,
+    }),
+    []
+  )
+
+  const extrudeSettingsTool2 = useMemo(
     () => ({
       steps: 1,
       depth: toolThickness,
@@ -146,26 +155,40 @@ function Cup(props) {
   )
 
 
-  let toolGeom = new THREE.ExtrudeGeometry(toolShape, extrudeSettings);
+  let toolGeom = new THREE.ExtrudeGeometry(toolShape, extrudeSettingsTool1);
 
   // Create a new matrix for the shear transformation
   let shearMatrix = new THREE.Matrix4();
 
   // Define the amount of shearing
-  let shearX = 0; // Adjust these values to your needs
-  let shearY = 0;
-  let shearZ = -1;
+  let shearZ = -1.5;
 
   // Set the matrix to represent a shear transformation along all axes
   shearMatrix.set(
-    1, shearX, 0, 0,
-    shearY, 1, 0, 0,
+    1, 0, 0, 0,
+    0, 1, 0, 0,
     0, shearZ, 1, 0,
     0, 0, 0, 1
   );
 
   // Apply the shear transformation to the geometry
   toolGeom.applyMatrix4(shearMatrix);
+
+  let toolBackProfile = []
+  toolBackProfile.push(new THREE.Vector2(toolHeight, -toolWidth))
+  toolBackProfile.push(new THREE.Vector2(0, -toolWidth))
+  toolBackProfile.push(new THREE.Vector2(0, -toolBackWidth-toolWidth))
+  toolBackProfile.push(new THREE.Vector2(toolHeight, -toolBackWidth-toolWidth))
+
+  const toolBackShape = new THREE.Shape( toolBackProfile );
+
+  // hole shape for tool
+  const holePath = new THREE.Path();
+  holePath.ellipse(toolHeight/2, -toolBackWidth*0.5-toolWidth, toolHeight/4, toolBackWidth/4, 0, Math.PI * 2, false, 0)
+  toolBackShape.holes.push(holePath); 
+  
+  let toolBackGeom = new THREE.ExtrudeGeometry(toolBackShape, extrudeSettingsTool2);
+
 
 
   return (
@@ -175,7 +198,11 @@ function Cup(props) {
           <meshPhysicalMaterial color="white" metalness={0.2} roughness={0.4}  wireframe={false} clearcoat={0.5} clearcoatRoughness={0.1}/>
         </Extrude>
 
-        <mesh geometry={toolGeom} position={[radius + 1, -height/2, 0]} rotation={[Math.PI, Math.PI*.75, -Math.PI/2]}>
+        <mesh geometry={toolGeom} position={[radius + 1, -height/2, radius*0.2]} rotation={[Math.PI, Math.PI*.75, -Math.PI/2]} scale={[1, 1, 1]}>
+          <meshPhongMaterial attach="material" color="pink" />
+        </mesh>
+
+        <mesh geometry={toolBackGeom} position={[radius + 1, -height/2, radius*0.2]} rotation={[Math.PI, Math.PI*1.062835, -Math.PI/2]}>
           <meshPhongMaterial attach="material" color="pink" />
         </mesh>
 
