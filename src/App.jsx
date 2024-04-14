@@ -1,5 +1,6 @@
 import { useState, useMemo} from 'react'
 import { Canvas } from '@react-three/fiber'
+import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
 import { AccumulativeShadows, RandomizedLight, Center, Environment, OrbitControls, Extrude, Shape} from '@react-three/drei'
 import { Lightformer } from '@react-three/drei'
 import { EffectComposer, N8AO } from '@react-three/postprocessing'
@@ -157,6 +158,9 @@ function Cup(props) {
 
   let toolGeom = new THREE.ExtrudeGeometry(toolShape, extrudeSettingsTool1);
 
+
+
+
   // Create a new matrix for the shear transformation
   let shearMatrix = new THREE.Matrix4();
 
@@ -174,6 +178,14 @@ function Cup(props) {
   // Apply the shear transformation to the geometry
   toolGeom.applyMatrix4(shearMatrix);
 
+  // position={[radius + 1, -height/2, radius*0.2]} rotation={[Math.PI, Math.PI*.75, -Math.PI/2]}
+  toolGeom.rotateX(Math.PI*1.25);
+  toolGeom.rotateY(Math.PI);
+  toolGeom.rotateZ(-Math.PI/2);
+  toolGeom.translate(radius + 1, -height/2, radius*0.2)
+
+
+
   let toolBackProfile = []
   toolBackProfile.push(new THREE.Vector2(toolHeight, -toolWidth))
   toolBackProfile.push(new THREE.Vector2(0, -toolWidth))
@@ -188,21 +200,27 @@ function Cup(props) {
   toolBackShape.holes.push(holePath); 
   
   let toolBackGeom = new THREE.ExtrudeGeometry(toolBackShape, extrudeSettingsTool2);
+  // position={[radius + 1, -height/2, radius*0.2]} rotation={[Math.PI, Math.PI*1.062835, -Math.PI/2]}
+  toolBackGeom.rotateX(Math.PI *(1-0.062835));
+  toolBackGeom.rotateY(Math.PI);
+  toolBackGeom.rotateZ(-Math.PI/2);
+  toolBackGeom.translate(radius + 1, -height/2, radius*0.2)
+
+
+
+  // merge the two tool Geoms into one
+  const singleGeometry = BufferGeometryUtils.mergeGeometries([toolBackGeom, toolGeom]);
 
 
 
   return (
     <Center top>
       <mesh castShadow >
-        <Extrude rotation={[0,0,-Math.PI/2]} args={[cupShape, extrudeSettings1]} castShadow>
+        <Extrude rotation={[0, 0, -Math.PI/2]} args={[cupShape, extrudeSettings1]} castShadow>
           <meshPhysicalMaterial color="white" metalness={0.2} roughness={0.4}  wireframe={false} clearcoat={0.5} clearcoatRoughness={0.1}/>
         </Extrude>
 
-        <mesh geometry={toolGeom} position={[radius + 1, -height/2, radius*0.2]} rotation={[Math.PI, Math.PI*.75, -Math.PI/2]} scale={[1, 1, 1]}>
-          <meshPhongMaterial attach="material" color="pink" />
-        </mesh>
-
-        <mesh geometry={toolBackGeom} position={[radius + 1, -height/2, radius*0.2]} rotation={[Math.PI, Math.PI*1.062835, -Math.PI/2]}>
+        <mesh geometry={singleGeometry} >
           <meshPhongMaterial attach="material" color="pink" />
         </mesh>
 
