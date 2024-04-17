@@ -84,6 +84,14 @@ function Accord(props) {
     });
   }
 
+  const handleBaseWaveChange = (event, newValue) => {
+    setValue(props.waveParams, props.setWaveParams, "baseWaveType", newValue.props.value)
+  };
+
+  const handleMixedWaveChange = (event, newValue) => {
+    setValue(props.waveParams, props.setWaveParams, "mixedWaveType", newValue.props.value)
+  };
+
   return (
     <Accordion defaultExpanded>
       <AccordionSummary
@@ -91,7 +99,8 @@ function Accord(props) {
         aria-controls="panel3-content"
         id="panel3-header"
       >
-      {props.name}
+      <Typography>{props.name}</Typography>
+      
       </AccordionSummary>
       <AccordionDetails>
         <Box>
@@ -101,22 +110,37 @@ function Accord(props) {
           <Typography>Width</Typography>
           <InputSlider value={props.waveParams.width} setValue={(value) => setValue(props.waveParams, props.setWaveParams, "width", value)} max={50} min={0.1}/>
           
-          <Typography>Sharpness (%)</Typography>
+          <Typography>Mixing (%)</Typography>
           <InputSlider value={props.waveParams.sharpness} setValue={(value) => setValue(props.waveParams, props.setWaveParams, "sharpness", value)} max={100} min={0}/>
           
+          <Typography>Base curve and mixing curve:</Typography>
           <Select
             labelId="select-curveShape-label"
+            className='select-curveShape'
             id="select-curveShape"
-            value={1}
+            value={props.waveParams.baseWaveType}
             label="CurveShape"
-            onChange={1}
+            onChange={handleBaseWaveChange}
           >
             <MenuItem value={0}>Triangle</MenuItem>
             <MenuItem value={1}>Elipsoid</MenuItem>
             <MenuItem value={2}>Sinus</MenuItem>
           </Select>
 
-          <Typography>Invert Curve</Typography>
+          <Select
+            labelId="select-curveShape-label"
+            id="select-curveShape"
+            className='select-curveShape'
+            value={props.waveParams.mixedWaveType}
+            label="CurveShape"
+            onChange={handleMixedWaveChange}
+          >
+            <MenuItem value={0}>Triangle</MenuItem>
+            <MenuItem value={1}>Elipsoid</MenuItem>
+            <MenuItem value={2}>Sinus</MenuItem>
+          </Select>
+
+          <Typography>Invert Curve:</Typography>
           <Checkbox {...label} checked={props.waveParams.outwards} onClick={() => setValue(props.waveParams, props.setWaveParams, "outwards", !props.waveParams.outwards)} />
         </Box>
       </AccordionDetails>

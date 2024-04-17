@@ -22,11 +22,12 @@ function elipsoidFunction(x, f, h) {
 
 
 // this functione can be used to interpolate between a sine wave and a triangle wave
-function InterpolatedFunction(x, sharpness, height, frequency){
-    return (1-sharpness) * elipsoidFunction(x, frequency, height) + sharpness * sinusFunction(x, frequency, height)
+function InterpolatedFunction(x, sharpness, height, frequency, baseWave, mixedWave){
+    let functions = [triangleFunction, elipsoidFunction, sinusFunction]
+    return (1-sharpness) * functions[baseWave](x, frequency, height) + sharpness * functions[mixedWave](x, frequency, height)
 }
 
-function getPoints(height, width, sharpness, currentX){
+function getPoints(height, width, sharpness, currentX, baseWave, mixedWave){
     var yValues = []
     var xValues = []
     let frequency = 1 / width
@@ -34,13 +35,13 @@ function getPoints(height, width, sharpness, currentX){
 
     for (var x = 0; x <= width; x += width/detail) {
         xValues.push(currentX + x)
-        yValues.push(InterpolatedFunction(x, sharpness, height, frequency));
+        yValues.push(InterpolatedFunction(x, sharpness, height, frequency, baseWave, mixedWave));
     }
     return {x: xValues, y: yValues};
 }
 
-// 
-export default function curveGen(height1, width1, sharpness1, height2, width2, sharpness2, totalLength, smoothening){
+
+export default function curveGen(height1, width1, sharpness1, baseType1, mixedType1, height2, width2, sharpness2, baseType2, mixedType2, totalLength, smoothening){
     let totalYValues = []
     let totalXValues = []
     let lengthDone = 0
@@ -49,12 +50,12 @@ export default function curveGen(height1, width1, sharpness1, height2, width2, s
     
     while(lengthDone + (firstCurve?width1:width2) <= totalLength){
         if (firstCurve){
-            curvePoints = getPoints(height1, width1, sharpness1, lengthDone)
+            curvePoints = getPoints(height1, width1, sharpness1, lengthDone, baseType1, mixedType1)
             totalYValues = [...totalYValues, ...curvePoints.y]
             totalXValues = [...totalXValues, ...curvePoints.x]
             lengthDone += width1
         }else{
-            curvePoints = getPoints(height2, width2, sharpness2, lengthDone)
+            curvePoints = getPoints(height2, width2, sharpness2, lengthDone, baseType2, mixedType2)
             totalYValues = [...totalYValues, ...curvePoints.y]
             totalXValues = [...totalXValues, ...curvePoints.x]
             lengthDone += width2
@@ -66,9 +67,9 @@ export default function curveGen(height1, width1, sharpness1, height2, width2, s
 
     // calc how much percent we still need of the yValues and append them
     if (firstCurve){
-        curvePoints = getPoints(height1, width1, sharpness1, lengthDone)
+        curvePoints = getPoints(height1, width1, sharpness1, lengthDone, baseType1, mixedType1)
     }else{
-        curvePoints = getPoints(height2, width2, sharpness2, lengthDone)
+        curvePoints = getPoints(height2, width2, sharpness2, lengthDone, baseType2, mixedType2)
     }
 
     for(let i = 0; i <= curvePoints.x.length; i++){
