@@ -10,34 +10,35 @@ import curveGen from './CurveGen'
 
 export default function App() {
   const [cupParams, setCupParams] = useState({
-    height: 100,
+    height: 89,
     radius: 40,
-    wallThickness: 5,
+    wallThickness: 3,
   })
 
   const [waveSmoothing, setWaveSmoothing] = useState(0)
 
   const [wave1Params, setWave1Params] = useState({
-      height: 2,
-      width: 5,
+      height: 3,
+      width: 15,
       sharpness: 0, // value from 0 to 1 
       outwards: true,
-      baseWaveType: 0, // 0 = Triangle | 1 = Elipsoid |  2 = Sinus
-      mixedWaveType: 0 // 0 = Triangle | 1 = Elipsoid |  2 = Sinus
+      baseWaveType: 1, // 0 = Triangle | 1 = Elipsoid |  2 = Sinus
+      mixedWaveType: 2 // 0 = Triangle | 1 = Elipsoid |  2 = Sinus
     })
   
   const [wave2Params, setWave2Params] = useState({
-      height: 2,
-      width: 5,
+      height: 0.8,
+      width: 3.5,
       sharpness: 0, // value from 0 to 1
       outwards: false, 
-      baseWaveType: 0, // 0 = Triangle | 1 = Elipsoid |  2 = Sinus
-      mixedWaveType: 0 // 0 = Triangle | 1 = Elipsoid |  2 = Sinus
+      baseWaveType: 2, // 0 = Triangle | 1 = Elipsoid |  2 = Sinus
+      mixedWaveType: 1 // 0 = Triangle | 1 = Elipsoid |  2 = Sinus
     })
 
   const [toolParams, setToolParams] = useState({
-      width: 30,
-      thickness: 0.3,
+      width: 20,
+      thickness: 0.6,
+      hole: true
     })
 
 
@@ -87,7 +88,7 @@ function Cup(props) {
   let toolWidth = Math.max((outwards1?waveHeight1:0), (outwards2?waveHeight2:0)) + 1
   let toolBackWidth = props.toolParams.width/10
   let toolHeight = props.cupParams.height/10
-  let toolThickness = props.toolParams.thickness
+  let toolThickness = props.toolParams.thickness/100
 
   const circlePoints = [];
   const segments = 100; // number of segments for the circle
@@ -141,12 +142,8 @@ function Cup(props) {
       steps: 1,
       depth: toolThickness*1.8029,
       bevelEnabled: false,
-      bevelThickness: 0.2,
-      bevelSize: 0.,
-      bevelOffset: -0.1,
-      bevelSegments: 10,
     }),
-    []
+    [toolThickness]
   )
 
   const extrudeSettingsTool2 = useMemo(
@@ -154,12 +151,8 @@ function Cup(props) {
       steps: 1,
       depth: toolThickness,
       bevelEnabled: false,
-      bevelThickness: 0.2,
-      bevelSize: 0.,
-      bevelOffset: -0.1,
-      bevelSegments: 10,
     }),
-    []
+    [toolThickness]
   )
 
 
@@ -199,10 +192,13 @@ function Cup(props) {
 
   const toolBackShape = new THREE.Shape( toolBackProfile );
 
-  // hole shape for tool
-  const holePath = new THREE.Path();
-  holePath.ellipse(toolHeight/2, -toolBackWidth*0.5-toolWidth, toolHeight/4, toolBackWidth/4, 0, Math.PI * 2, false, 0)
-  toolBackShape.holes.push(holePath); 
+  // hole shape for tool´
+  if(props.toolParams.hole){
+    const holePath = new THREE.Path();
+    holePath.ellipse(toolHeight/2, -toolBackWidth*0.5-toolWidth, toolHeight/4, toolBackWidth/4, 0, Math.PI * 2, false, 0)
+    toolBackShape.holes.push(holePath); 
+  }
+
   
   let toolBackGeom = new THREE.ExtrudeGeometry(toolBackShape, extrudeSettingsTool2);
   // position={[radius + 1, -height/2, radius*0.2]} rotation={[Math.PI, Math.PI*1.062835, -Math.PI/2]}
@@ -215,7 +211,6 @@ function Cup(props) {
 
   // merge the two tool Geoms into one
   const singleGeometry = BufferGeometryUtils.mergeGeometries([toolBackGeom, toolGeom]);
-
 
 
   return (

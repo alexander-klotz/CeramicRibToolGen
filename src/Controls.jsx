@@ -4,6 +4,8 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 import InputSlider from './InputSlider';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
+const label = { inputProps: { 'aria-label': 'Checkbox demo' } };
+
 function Controls(props) {
 
   const darkTheme = createTheme({
@@ -26,6 +28,7 @@ function Controls(props) {
     setTabIndex(newTabIndex);
   };
   
+
   return (
     <ThemeProvider theme={darkTheme}>
         <Box className='controlsDiv'>
@@ -53,16 +56,22 @@ function Controls(props) {
               <Box>
                 <Accord name="First Curve" waveParams={props.wave1Params} setWaveParams={props.setWave1Params}/>
                 <Accord name="Second Curve" waveParams={props.wave2Params} setWaveParams={props.setWave2Params}/>
-                <p> </p>
-                <Typography>Smoothing (%)</Typography>
-                <InputSlider value={props.waveSmoothing} setValue={props.setWaveSmoothing} max={100} min={0}/>
+                {
+                  //                <Typography>Smoothing (%)</Typography> <InputSlider value={props.waveSmoothing} setValue={props.setWaveSmoothing} max={100} min={0}/>
+                }
+
               </Box>
 
             )}
             {tabIndex === 2 && (
               <Box>
-                <Typography>The third tab</Typography>
-                <InputSlider />
+                <Typography>Width</Typography>
+                <InputSlider value={props.toolParams.width} setValue={(value) => setValue(props.toolParams, props.setToolParams, "width", value)} max={50} min={0.1}/>
+                
+                <Typography>Thickness</Typography>
+                <InputSlider value={props.toolParams.thickness} setValue={(value) => setValue(props.toolParams, props.setToolParams, "thickness", value)} max={50} min={0.1}/>
+                <Typography>Tool hole:</Typography>
+                <Checkbox {...label} checked={props.toolParams.hole} onClick={() => setValue(props.toolParams, props.setToolParams, "hole", !props.toolParams.hole)} />
               </Box>
             )}
           </Box>
@@ -72,8 +81,6 @@ function Controls(props) {
   );
 
 }
-
-const label = { inputProps: { 'aria-label': 'Checkbox demo' } };
 
 function Accord(props) {
 
