@@ -37,8 +37,8 @@ export default function App() {
     })
 
   const [toolParams, setToolParams] = useState({
-      width: 20,
-      thickness: 0.6,
+      width: 35,
+      thickness: 20,
       hole: true
     })
 
@@ -179,13 +179,13 @@ function Cup(props) {
   holeGeom.rotateX(Math.PI/2)
   holeGeom.rotateY(-Math.PI/15.915)
   holeGeom.scale(0.5, height/holeDiameter/3, 1);
-  holeGeom.translate(radius + 1 + toolWidth, 0, 0);
+  holeGeom.translate(radius + 2.75 + Math.max((outwards1?waveHeight1:0), (outwards2?waveHeight2:0)), 0, 0);
 
   let cutOff = new THREE.BoxGeometry(10, 5, height*1.2)
   cutOff.rotateZ(-Math.PI/2)
   cutOff.rotateX(Math.PI/2)
   cutOff.rotateY(-Math.PI/15.915)
-  cutOff.translate(radius + 1 + toolWidth + toolWidth + 1.5, 0, 1.5);
+  cutOff.translate(radius + 1 + toolWidth*2+ 1.5, 0, 1.5);
 
 
 
