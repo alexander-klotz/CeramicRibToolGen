@@ -86,8 +86,7 @@ function Cup(props) {
   let baseWaveType2 =  props.wave2Params.baseWaveType
   let mixedWaveType2 =  props.wave2Params.mixedWaveType
 
-  let toolWidth = Math.max((outwards1?waveHeight1:0), (outwards2?waveHeight2:0)) + 1
-  let toolBackWidth = props.toolParams.width/10
+  let toolWidth = (Math.max((outwards1?waveHeight1:0), (outwards2?waveHeight2:0)) + props.toolParams.width/10)/1.5
   let toolHeight = props.cupParams.height/10
   let toolThickness = props.toolParams.thickness/100
 
@@ -116,7 +115,7 @@ function Cup(props) {
   const toolProfile = []
 
   cupProfile.push(new THREE.Vector2(0, wallThickness))
-  toolProfile.push(new THREE.Vector2(0, -toolWidth/1.8))
+  toolProfile.push(new THREE.Vector2(0, -toolWidth))
   // Generate the points on the sinus wave
   
 
@@ -132,7 +131,7 @@ function Cup(props) {
   
 
   cupProfile.push(new THREE.Vector2(height, wallThickness))
-  toolProfile.push(new THREE.Vector2(toolHeight, -toolWidth/1.8))
+  toolProfile.push(new THREE.Vector2(toolHeight, -toolWidth))
 
   const cupShape = new THREE.Shape( cupProfile );
   const toolShape = new THREE.Shape( toolProfile );
@@ -142,15 +141,6 @@ function Cup(props) {
     () => ({
       steps: 1,
       depth: toolThickness*1.8029,
-      bevelEnabled: false,
-    }),
-    [toolThickness]
-  )
-
-  const extrudeSettingsTool2 = useMemo(
-    () => ({
-      steps: 1,
-      depth: toolThickness,
       bevelEnabled: false,
     }),
     [toolThickness]
@@ -183,35 +173,21 @@ function Cup(props) {
   toolGeom.rotateZ(-Math.PI/2);
   toolGeom.translate(radius + 1, -height/2, radius*0.2)
 
-
-
-  let toolBackProfile = []
-  toolBackProfile.push(new THREE.Vector2(toolHeight, -toolWidth))
-  toolBackProfile.push(new THREE.Vector2(0, -toolWidth))
-  toolBackProfile.push(new THREE.Vector2(0, -toolBackWidth-toolWidth))
-  toolBackProfile.push(new THREE.Vector2(toolHeight, -toolBackWidth-toolWidth))
-
-  const toolBackShape = new THREE.Shape( toolBackProfile );
-  
-  let toolBackGeom = new THREE.ExtrudeGeometry(toolBackShape, extrudeSettingsTool2);
-  // position={[radius + 1, -height/2, radius*0.2]} rotation={[Math.PI, Math.PI*1.062835, -Math.PI/2]}
-  toolBackGeom.rotateX(Math.PI *(1-0.062835));
-  toolBackGeom.rotateY(Math.PI);
-  toolBackGeom.rotateZ(-Math.PI/2);
-  toolBackGeom.translate(radius + 1, -height/2, radius*0.2)
-
-
-
-  // merge the two tool Geoms into one
-  let singleGeometry = BufferGeometryUtils.mergeGeometries([toolBackGeom, toolGeom]);
   
   let holeDiameter = 2
   let holeGeom = new THREE.CylinderGeometry(holeDiameter, holeDiameter, 10, 32);
   holeGeom.rotateX(Math.PI/2)
-  holeGeom.rotateY(-Math.PI/16)
+  holeGeom.rotateY(-Math.PI/15.915)
   holeGeom.scale(0.5, height/holeDiameter/3, 1);
-  holeGeom.translate(radius + 1 + toolBackWidth*0.5+toolWidth, 0, 0);
-  
+  holeGeom.translate(radius + 1 + toolWidth, 0, 0);
+
+  let cutOff = new THREE.BoxGeometry(10, 5, height*1.2)
+  cutOff.rotateZ(-Math.PI/2)
+  cutOff.rotateX(Math.PI/2)
+  cutOff.rotateY(-Math.PI/15.915)
+  cutOff.translate(radius + 1 + toolWidth + toolWidth + 1.5, 0, 1.5);
+
+
 
   return (
     <Center top>
@@ -223,8 +199,9 @@ function Cup(props) {
         <mesh>
           <meshNormalMaterial />
           <CSG.Geometry>
-            <CSG.Base geometry={singleGeometry} />
-            <CSG.Subtraction geometry={holeGeom}/>
+            <CSG.Base geometry={toolGeom} />
+            {props.toolParams.hole && <CSG.Subtraction geometry={holeGeom}/>}
+            <CSG.Subtraction geometry={cutOff}/>
           </CSG.Geometry>
 
           <meshPhongMaterial attach="material" color="pink" />
@@ -256,13 +233,3 @@ function Env() {
 
   )
 }
-
-
-/*
-  // hole shape for tool´
-  if(props.toolParams.hole){
-    const holePath = new THREE.Path();
-    holePath.ellipse(toolHeight/2, -toolBackWidth*0.5-toolWidth, toolHeight/4, toolBackWidth/4, 0, Math.PI * 2, false, 0)
-    toolBackShape.holes.push(holePath); 
-  }
-*/
