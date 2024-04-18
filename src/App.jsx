@@ -7,6 +7,7 @@ import { EffectComposer, N8AO } from '@react-three/postprocessing'
 import * as THREE from 'three';
 import Controls from './Controls'
 import curveGen from './CurveGen'
+import * as CSG from '@react-three/csg'
 
 export default function App() {
   const [cupParams, setCupParams] = useState({
@@ -191,14 +192,6 @@ function Cup(props) {
   toolBackProfile.push(new THREE.Vector2(toolHeight, -toolBackWidth-toolWidth))
 
   const toolBackShape = new THREE.Shape( toolBackProfile );
-
-  // hole shape for tool´
-  if(props.toolParams.hole){
-    const holePath = new THREE.Path();
-    holePath.ellipse(toolHeight/2, -toolBackWidth*0.5-toolWidth, toolHeight/4, toolBackWidth/4, 0, Math.PI * 2, false, 0)
-    toolBackShape.holes.push(holePath); 
-  }
-
   
   let toolBackGeom = new THREE.ExtrudeGeometry(toolBackShape, extrudeSettingsTool2);
   // position={[radius + 1, -height/2, radius*0.2]} rotation={[Math.PI, Math.PI*1.062835, -Math.PI/2]}
@@ -210,8 +203,15 @@ function Cup(props) {
 
 
   // merge the two tool Geoms into one
-  const singleGeometry = BufferGeometryUtils.mergeGeometries([toolBackGeom, toolGeom]);
-
+  let singleGeometry = BufferGeometryUtils.mergeGeometries([toolBackGeom, toolGeom]);
+  
+  let holeDiameter = 2
+  let holeGeom = new THREE.CylinderGeometry(holeDiameter, holeDiameter, 10, 32);
+  holeGeom.rotateX(Math.PI/2)
+  holeGeom.rotateY(-Math.PI/16)
+  holeGeom.scale(0.5, height/holeDiameter/3, 1);
+  holeGeom.translate(radius + 1 + toolBackWidth*0.5+toolWidth, 0, 0);
+  
 
   return (
     <Center top>
@@ -220,9 +220,17 @@ function Cup(props) {
           <meshPhysicalMaterial color="white" metalness={0.2} roughness={0.4}  wireframe={false} clearcoat={0.5} clearcoatRoughness={0.1}/>
         </Extrude>
 
-        <mesh geometry={singleGeometry} >
+        <mesh>
+          <meshNormalMaterial />
+          <CSG.Geometry>
+            <CSG.Base geometry={singleGeometry} />
+            <CSG.Subtraction geometry={holeGeom}/>
+          </CSG.Geometry>
+
           <meshPhongMaterial attach="material" color="pink" />
         </mesh>
+
+
 
       </mesh>
     </Center>
@@ -248,3 +256,13 @@ function Env() {
 
   )
 }
+
+
+/*
+  // hole shape for tool´
+  if(props.toolParams.hole){
+    const holePath = new THREE.Path();
+    holePath.ellipse(toolHeight/2, -toolBackWidth*0.5-toolWidth, toolHeight/4, toolBackWidth/4, 0, Math.PI * 2, false, 0)
+    toolBackShape.holes.push(holePath); 
+  }
+*/
