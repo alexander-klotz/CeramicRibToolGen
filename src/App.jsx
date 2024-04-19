@@ -1,4 +1,4 @@
-import { useState, useMemo} from 'react'
+import { useState, useMemo, useEffect} from 'react'
 import { Canvas } from '@react-three/fiber'
 import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
 import { AccumulativeShadows, RandomizedLight, Center, Environment, OrbitControls, Extrude, Shape} from '@react-three/drei'
@@ -8,6 +8,10 @@ import * as THREE from 'three';
 import Controls from './Controls'
 import curveGen from './CurveGen'
 import * as CSG from '@react-three/csg'
+import Fab from '@mui/material/Fab';
+import SaveAltIcon from '@mui/icons-material/SaveAlt';
+import { STLExporter } from 'three/addons/exporters/STLExporter.js';
+import { saveAs } from 'file-saver';
 
 export default function App() {
   const [cupParams, setCupParams] = useState({
@@ -42,6 +46,25 @@ export default function App() {
       hole: true
     })
 
+  const [toolMesh, setToolMesh] = useState(null);
+
+  function saveSTL(){
+    if (!toolMesh) {
+      console.error('Tool mesh is not available');
+      return;
+    }
+
+    const exporter = new STLExporter();
+    // Configure export options
+    const options = { binary: true }
+    console.log(toolMesh)
+    const stlString = exporter.parse(toolMesh, options);
+    const blob = new Blob([stlString], { type: 'text/plain' });
+
+    // save STL file
+    saveAs(blob, 'CeramicRibTool.stl');
+  }
+
 
   return (
     <div style={{ width: "100vw", height: "100vh" }}>
@@ -54,14 +77,19 @@ export default function App() {
       />
 
       <Canvas camera={{ position: [10, 10, 13], fov: 50 }} style={{ background: '#b9ccc0'}}>
-        <group position={[0, -5, 0]}>
-          <Cup cupParams={cupParams} wave1Params={wave1Params} wave2Params={wave2Params} waveSmoothing={waveSmoothing} toolParams={toolParams}/>
+        <group position={[4, -5, 0]}>
+          <Cup cupParams={cupParams} wave1Params={wave1Params} 
+                wave2Params={wave2Params} waveSmoothing={waveSmoothing} 
+                toolParams={toolParams} toolMesh={toolMesh} setToolMesh={setToolMesh}/>
         </group>
         
         <ambientLight intensity={1.8} />
         <pointLight position={[15, 8, 6]} intensity={400}/>        
         <OrbitControls enablePan={false} enableZoom={true} enableRotate={true} minPolarAngle={0} maxPolarAngle={Math.PI/2} />
       </Canvas>
+      <Fab color="primary" aria-label="add" style={{ position: 'fixed', bottom: '20px', right: '20px' }} onClick={saveSTL}>
+        <SaveAltIcon />
+      </Fab>
     </div>
   )
 }
@@ -187,6 +215,21 @@ function Cup(props) {
   cutOff.rotateY(-Math.PI/15.915)
   cutOff.translate(radius + 1 + toolWidth*2+ 1.5, 0, 1.5);
 
+  let toolMesh = <mesh>
+    <meshNormalMaterial />
+    <CSG.Geometry>
+      <CSG.Base geometry={toolGeom} />
+      {props.toolParams.hole && <CSG.Subtraction geometry={holeGeom}/>}
+      <CSG.Subtraction geometry={cutOff}/>
+    </CSG.Geometry>
+
+    <meshPhongMaterial attach="material" color="pink" />
+  </mesh>
+
+  // Update toolMesh when it changes
+  useEffect(() => {
+    props.setToolMesh(toolMesh);
+  }, [toolMesh]);
 
 
   return (

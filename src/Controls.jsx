@@ -1,6 +1,6 @@
+import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { Box, Tab, Tabs, Typography, Accordion, AccordionSummary, AccordionDetails, Checkbox, Select, MenuItem } from '@mui/material';
 import { useState } from 'react';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
 import InputSlider from './InputSlider';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
