@@ -7,11 +7,13 @@ import { EffectComposer, N8AO } from '@react-three/postprocessing'
 import * as THREE from 'three';
 import Controls from './Controls'
 import curveGen from './CurveGen'
-import * as CSG from '@react-three/csg'
+import { CSG } from 'three-csg-ts';
 import Fab from '@mui/material/Fab';
 import SaveAltIcon from '@mui/icons-material/SaveAlt';
 import { STLExporter } from 'three/addons/exporters/STLExporter.js';
 import { saveAs } from 'file-saver';
+
+
 
 export default function App() {
   const [cupParams, setCupParams] = useState({
@@ -54,11 +56,13 @@ export default function App() {
       return;
     }
 
+    const scaledToolMesh = toolMesh.clone();
+    scaledToolMesh.scale.set(100, 100, 100);
+
     const exporter = new STLExporter();
     // Configure export options
     const options = { binary: true }
-    console.log(toolMesh)
-    const stlString = exporter.parse(toolMesh, options);
+    const stlString = exporter.parse(scaledToolMesh, options);
     const blob = new Blob([stlString], { type: 'text/plain' });
 
     // save STL file
@@ -76,15 +80,15 @@ export default function App() {
         toolParams={toolParams} setToolParams={setToolParams}  
       />
 
-      <Canvas camera={{ position: [10, 10, 13], fov: 50 }} style={{ background: '#b9ccc0'}}>
-        <group position={[4, -5, 0]}>
+      <Canvas camera={{ position: [100, 100, 200], fov: 50 }} style={{ background: '#b9ccc0'}}>
+        <group position={[0, -25, 0]}>
           <Cup cupParams={cupParams} wave1Params={wave1Params} 
                 wave2Params={wave2Params} waveSmoothing={waveSmoothing} 
                 toolParams={toolParams} toolMesh={toolMesh} setToolMesh={setToolMesh}/>
         </group>
         
         <ambientLight intensity={1.8} />
-        <pointLight position={[15, 8, 6]} intensity={400}/>        
+        <pointLight position={[100, 200, 200]} intensity={90000}/>        
         <OrbitControls enablePan={false} enableZoom={true} enableRotate={true} minPolarAngle={0} maxPolarAngle={Math.PI/2} />
       </Canvas>
       <Fab color="primary" aria-label="add" style={{ position: 'fixed', bottom: '20px', right: '20px' }} onClick={saveSTL}>
@@ -96,27 +100,29 @@ export default function App() {
 
 function Cup(props) {
 
-  let height = props.cupParams.height/10
-  let radius = props.cupParams.radius/10
-  let wallThickness = props.cupParams.wallThickness/10
+  let toolMesh = null
 
-  let waveHeight1 = props.wave1Params.height/10
-  let waveWidth1 = props.wave1Params.width/10
+  let height = props.cupParams.height
+  let radius = props.cupParams.radius
+  let wallThickness = props.cupParams.wallThickness
+
+  let waveHeight1 = props.wave1Params.height
+  let waveWidth1 = props.wave1Params.width
   let waveSharpness1 = props.wave1Params.sharpness / 100
   let outwards1 = props.wave1Params.outwards
   let baseWaveType1 =  props.wave1Params.baseWaveType
   let mixedWaveType1 =  props.wave1Params.mixedWaveType
 
-  let waveHeight2 = props.wave2Params.height/10
-  let waveWidth2 = props.wave2Params.width/10
+  let waveHeight2 = props.wave2Params.height
+  let waveWidth2 = props.wave2Params.width
   let waveSharpness2 = props.wave2Params.sharpness / 100
   let outwards2 = props.wave2Params.outwards
   let baseWaveType2 =  props.wave2Params.baseWaveType
   let mixedWaveType2 =  props.wave2Params.mixedWaveType
 
-  let toolWidth = (Math.max((outwards1?waveHeight1:0), (outwards2?waveHeight2:0)) + props.toolParams.width/10)/1.5
-  let toolHeight = props.cupParams.height/10
-  let toolThickness = props.toolParams.thickness/100
+  let toolWidth = (Math.max((outwards1?waveHeight1:0), (outwards2?waveHeight2:0)) + props.toolParams.width)/1.5
+  let toolHeight = props.cupParams.height
+  let toolThickness = props.toolParams.thickness/10
 
   const circlePoints = [];
   const segments = 100; // number of segments for the circle
@@ -199,7 +205,7 @@ function Cup(props) {
   toolGeom.rotateX(Math.PI*1.25);
   toolGeom.rotateY(Math.PI);
   toolGeom.rotateZ(-Math.PI/2);
-  toolGeom.translate(radius + 1, -height/2, radius*0.2)
+  toolGeom.translate(radius + 10, -height/2, radius*0.2)
 
   
   let holeDiameter = 2
@@ -207,24 +213,13 @@ function Cup(props) {
   holeGeom.rotateX(Math.PI/2)
   holeGeom.rotateY(-Math.PI/15.915)
   holeGeom.scale(0.5, height/holeDiameter/3, 1);
-  holeGeom.translate(radius + 2.75 + Math.max((outwards1?waveHeight1:0), (outwards2?waveHeight2:0)), 0, 0);
+  holeGeom.translate(radius + 27.5 + Math.max((outwards1?waveHeight1:0), (outwards2?waveHeight2:0)), 0, 0);
 
   let cutOff = new THREE.BoxGeometry(10, 5, height*1.2)
   cutOff.rotateZ(-Math.PI/2)
   cutOff.rotateX(Math.PI/2)
   cutOff.rotateY(-Math.PI/15.915)
-  cutOff.translate(radius + 1 + toolWidth*2+ 1.5, 0, 1.5);
-
-  let toolMesh = <mesh>
-    <meshNormalMaterial />
-    <CSG.Geometry>
-      <CSG.Base geometry={toolGeom} />
-      {props.toolParams.hole && <CSG.Subtraction geometry={holeGeom}/>}
-      <CSG.Subtraction geometry={cutOff}/>
-    </CSG.Geometry>
-
-    <meshPhongMaterial attach="material" color="pink" />
-  </mesh>
+  cutOff.translate(radius + 10 + toolWidth*2+ 1.5, 0, 1.5);
 
   // Update toolMesh when it changes
   useEffect(() => {
@@ -232,27 +227,35 @@ function Cup(props) {
   }, [toolMesh]);
 
 
+  const toolMeshUncut = new THREE.Mesh(toolGeom);
+  const holeMesh = new THREE.Mesh(holeGeom);
+  const cutOffMesh = new THREE.Mesh(cutOff);
+
+  toolMeshUncut.updateMatrix();
+  holeMesh.updateMatrix();
+  cutOffMesh.updateMatrix();
+  
+
+  
+  toolMesh = CSG.subtract(toolMeshUncut, cutOffMesh);
+  if(props.toolParams.hole){
+    toolMesh = CSG.subtract(toolMesh, holeMesh);
+  }
+
   return (
     <Center top>
       <mesh castShadow >
         <Extrude rotation={[0, 0, -Math.PI/2]} args={[cupShape, extrudeSettings1]} castShadow>
           <meshPhysicalMaterial color="white" metalness={0.2} roughness={0.4}  wireframe={false} clearcoat={0.5} clearcoatRoughness={0.1}/>
         </Extrude>
-
-        <mesh>
-          <meshNormalMaterial />
-          <CSG.Geometry>
-            <CSG.Base geometry={toolGeom} />
-            {props.toolParams.hole && <CSG.Subtraction geometry={holeGeom}/>}
-            <CSG.Subtraction geometry={cutOff}/>
-          </CSG.Geometry>
-
-          <meshPhongMaterial attach="material" color="pink" />
-        </mesh>
-
-
-
       </mesh>
+      <mesh castShadow >
+        <meshStandardMaterial color="pink"/>
+      </mesh>
+      <primitive object={toolMesh} castShadow>
+        <meshStandardMaterial color="pink"/>
+      </primitive>
+
     </Center>
   )
 }
@@ -276,3 +279,17 @@ function Env() {
 
   )
 }
+
+
+/*
+        <mesh>
+          <meshNormalMaterial />
+          <CSG.Geometry>
+            <CSG.Base geometry={toolGeom} />
+            {props.toolParams.hole && <CSG.Subtraction geometry={holeGeom}/>}
+            <CSG.Subtraction geometry={cutOff}/>
+          </CSG.Geometry>
+
+          <meshPhongMaterial attach="material" color="pink" />
+        </mesh>
+*/
