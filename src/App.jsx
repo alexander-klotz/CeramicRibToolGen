@@ -1,9 +1,6 @@
 import { useState, useMemo, useEffect} from 'react'
 import { Canvas } from '@react-three/fiber'
-import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
-import { AccumulativeShadows, RandomizedLight, Center, Environment, OrbitControls, Extrude, Shape} from '@react-three/drei'
-import { Lightformer } from '@react-three/drei'
-import { EffectComposer, N8AO } from '@react-three/postprocessing'
+import {Center, OrbitControls, Extrude} from '@react-three/drei'
 import * as THREE from 'three';
 import Controls from './Controls'
 import curveGen from './CurveGen'
@@ -56,13 +53,10 @@ export default function App() {
       return;
     }
 
-    const scaledToolMesh = toolMesh.clone();
-    scaledToolMesh.scale.set(100, 100, 100);
-
     const exporter = new STLExporter();
     // Configure export options
     const options = { binary: true }
-    const stlString = exporter.parse(scaledToolMesh, options);
+    const stlString = exporter.parse(toolMesh, options);
     const blob = new Blob([stlString], { type: 'text/plain' });
 
     // save STL file
@@ -99,8 +93,12 @@ export default function App() {
 }
 
 function Cup(props) {
-
+  console.log("test")
   let toolMesh = null
+  // Update toolMesh when it changes
+  useEffect(() => {
+    props.setToolMesh(toolMesh);
+  }, [toolMesh]);
 
   let height = props.cupParams.height
   let radius = props.cupParams.radius
@@ -125,7 +123,7 @@ function Cup(props) {
   let toolThickness = props.toolParams.thickness/10
 
   const circlePoints = [];
-  const segments = 100; // number of segments for the circle
+  const segments = 50; // number of segments for the circle
   
   // Generate the points on the circle
   for (let i = 0; i <= segments; i++) {
@@ -141,7 +139,7 @@ function Cup(props) {
   closedSpline.closed = true;
 
   const extrudeSettings1 = {
-    steps: 100,
+    steps: 50,
     extrudePath: closedSpline    
   };
 
@@ -208,24 +206,18 @@ function Cup(props) {
   toolGeom.translate(radius + 10, -height/2, radius*0.2)
 
   
-  let holeDiameter = 2
-  let holeGeom = new THREE.CylinderGeometry(holeDiameter, holeDiameter, 10, 32);
+  let holeDiameter = 20
+  let holeGeom = new THREE.CylinderGeometry(holeDiameter, holeDiameter, 100, 32);
   holeGeom.rotateX(Math.PI/2)
   holeGeom.rotateY(-Math.PI/15.915)
   holeGeom.scale(0.5, height/holeDiameter/3, 1);
   holeGeom.translate(radius + 27.5 + Math.max((outwards1?waveHeight1:0), (outwards2?waveHeight2:0)), 0, 0);
 
-  let cutOff = new THREE.BoxGeometry(10, 5, height*1.2)
+  let cutOff = new THREE.BoxGeometry(100, 50, height*1.2)
   cutOff.rotateZ(-Math.PI/2)
   cutOff.rotateX(Math.PI/2)
   cutOff.rotateY(-Math.PI/15.915)
-  cutOff.translate(radius + 10 + toolWidth*2+ 1.5, 0, 1.5);
-
-  // Update toolMesh when it changes
-  useEffect(() => {
-    props.setToolMesh(toolMesh);
-  }, [toolMesh]);
-
+  cutOff.translate(radius + 10 + toolWidth*2 + 15, 0, 15);
 
   const toolMeshUncut = new THREE.Mesh(toolGeom);
   const holeMesh = new THREE.Mesh(holeGeom);
@@ -236,7 +228,6 @@ function Cup(props) {
   cutOffMesh.updateMatrix();
   
 
-  
   toolMesh = CSG.subtract(toolMeshUncut, cutOffMesh);
   if(props.toolParams.hole){
     toolMesh = CSG.subtract(toolMesh, holeMesh);
@@ -249,47 +240,9 @@ function Cup(props) {
           <meshPhysicalMaterial color="white" metalness={0.2} roughness={0.4}  wireframe={false} clearcoat={0.5} clearcoatRoughness={0.1}/>
         </Extrude>
       </mesh>
-      <mesh castShadow >
-        <meshStandardMaterial color="pink"/>
-      </mesh>
       <primitive object={toolMesh} castShadow>
         <meshStandardMaterial color="pink"/>
       </primitive>
-
     </Center>
   )
 }
-
- 
-function Env() {
-  return       (
-    <>
-      <EffectComposer disableNormalPass multisampling={8}>
-      <N8AO distanceFalloff={0.1} aoRadius={1} intensity={4} />
-      </EffectComposer>
-      <Environment resolution={256}>
-        <group rotation={[-Math.PI / 3, 0, 1]}>
-          <Lightformer form="circle" intensity={4} rotation-x={Math.PI / 2} position={[0, 5, -9]} scale={2} />
-          <Lightformer form="circle" intensity={2} rotation-y={Math.PI / 2} position={[-5, 1, -1]} scale={2} />
-          <Lightformer form="circle" intensity={2} rotation-y={Math.PI / 2} position={[-5, -1, -1]} scale={2} />
-          <Lightformer form="circle" intensity={2} rotation-y={-Math.PI / 2} position={[10, 1, 0]} scale={8} />
-        </group>
-      </Environment>
-    </>
-
-  )
-}
-
-
-/*
-        <mesh>
-          <meshNormalMaterial />
-          <CSG.Geometry>
-            <CSG.Base geometry={toolGeom} />
-            {props.toolParams.hole && <CSG.Subtraction geometry={holeGeom}/>}
-            <CSG.Subtraction geometry={cutOff}/>
-          </CSG.Geometry>
-
-          <meshPhongMaterial attach="material" color="pink" />
-        </mesh>
-*/
