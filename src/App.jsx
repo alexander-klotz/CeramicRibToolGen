@@ -199,7 +199,6 @@ function Cup(props) {
   // Apply the shear transformation to the geometry
   toolGeom.applyMatrix4(shearMatrix);
 
-  // position={[radius + 1, -height/2, radius*0.2]} rotation={[Math.PI, Math.PI*.75, -Math.PI/2]}
   toolGeom.rotateX(Math.PI*1.25);
   toolGeom.rotateY(Math.PI);
   toolGeom.rotateZ(-Math.PI/2);
